@@ -1,18 +1,30 @@
 // Отримуємо елементи форми
 const form = document.querySelector('.feedback-form');
-const emailInput = form.querySelector('input[name="email"]');
-const messageTextarea = form.querySelector('textarea[name="message"]');
 
 // Ключ для локального сховища
 const STORAGE_KEY = 'feedback-form-state';
 
-// Функція для збереження даних у локальне сховище
+// Глобальний об'єкт formData, який завжди відображає поточний стан форми
+let formData = {
+  email: '',
+  message: '',
+};
+
+// Функція для збереження даних у локальне сховище та оновлення глобального об'єкта
 function saveToLocalStorage() {
-  const formData = {
-    email: emailInput.value,
-    message: messageTextarea.value,
-  };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+}
+
+// Функція для оновлення глобального об'єкта formData з DOM
+function updateFormData() {
+  formData.email = form.elements.email.value.trim();
+  formData.message = form.elements.message.value.trim();
+}
+
+// Функція для оновлення DOM з глобального об'єкта formData
+function updateDomFromFormData() {
+  form.elements.email.value = formData.email;
+  form.elements.message.value = formData.message;
 }
 
 // Функція для завантаження даних з локального сховища
@@ -21,43 +33,56 @@ function loadFromLocalStorage() {
 
   if (savedData) {
     try {
-      const formData = JSON.parse(savedData);
-      emailInput.value = formData.email || '';
-      messageTextarea.value = formData.message || '';
+      const parsedData = JSON.parse(savedData);
+      // Оновлюємо глобальний об'єкт formData
+      formData.email = parsedData.email || '';
+      formData.message = parsedData.message || '';
+      // Оновлюємо DOM
+      updateDomFromFormData();
     } catch (error) {
       console.error('Помилка парсингу даних:', error);
     }
   }
 }
 
-// Функція для очищення локального сховища та форми
-function clearLocalStorage() {
+// Функція для скидання всього (глобальний об'єкт, localStorage, DOM)
+function resetForm() {
+  // Скидаємо глобальний об'єкт formData
+  formData.email = '';
+  formData.message = '';
+  // Очищаємо localStorage
   localStorage.removeItem(STORAGE_KEY);
+  // Очищаємо DOM
   form.reset();
 }
 
-// Слухаємо подію 'input' на формі (викликається при кожному введенні)
-form.addEventListener('input', saveToLocalStorage);
+// Обробник події input - оновлює глобальний об'єкт та зберігає в localStorage
+form.addEventListener('input', () => {
+  // Оновлюємо глобальний об'єкт formData з поточними значеннями полів
+  updateFormData();
+  // Зберігаємо оновлений об'єкт у localStorage
+  saveToLocalStorage();
+});
 
-// Завантажуємо збережені дані при завантаженні сторінки
-loadFromLocalStorage();
-
-// Опціонально: очищаємо сховище при сабміті форми
+// Обробник події submit
 form.addEventListener('submit', event => {
   event.preventDefault();
 
+  // Оновлюємо глобальний об'єкт перед відправкою
+  updateFormData();
+
   // Перевіряємо, чи всі поля заповнені
-  if (emailInput.value === '' || messageTextarea.value === '') {
-    alert('Fill please all fields');
+  if (formData.email === '' || formData.message === '') {
+    alert('Будь ласка, заповніть всі поля форми!');
     return;
   }
 
-  // Виводимо дані в консоль
-  console.log('Відправлені дані:', {
-    email: emailInput.value,
-    message: messageTextarea.value,
-  });
+  // Виводимо дані з глобального об'єкта formData в консоль
+  console.log('Відправлені дані:', formData);
 
-  // Очищаємо сховище та форму
-  clearLocalStorage();
+  // Скидаємо форму (очищаємо глобальний об'єкт, localStorage, DOM)
+  resetForm();
 });
+
+// Завантажуємо збережені дані при завантаженні сторінки
+loadFromLocalStorage();
