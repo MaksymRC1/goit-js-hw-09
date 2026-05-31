@@ -4,30 +4,30 @@ const form = document.querySelector('.feedback-form');
 // Ключ для локального сховища
 const STORAGE_KEY = 'feedback-form-state';
 
-// Глобальний об'єкт formData, який завжди відображає поточний стан форми
+// ГЛОБАЛЬНИЙ ОБ'ЄКТ formData, який завжди відображає поточний стан форми
 let formData = {
   email: '',
   message: '',
 };
 
-// Функція для збереження даних у локальне сховище та оновлення глобального об'єкта
-function saveToLocalStorage() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
-}
-
 // Функція для оновлення глобального об'єкта formData з DOM
-function updateFormData() {
-  formData.email = form.elements.email.value.trim();
-  formData.message = form.elements.message.value.trim();
+function updateFormDataFromDOM() {
+  formData.email = form.elements.email.value;
+  formData.message = form.elements.message.value;
 }
 
 // Функція для оновлення DOM з глобального об'єкта formData
-function updateDomFromFormData() {
+function updateDOMFromFormData() {
   form.elements.email.value = formData.email;
   form.elements.message.value = formData.message;
 }
 
-// Функція для завантаження даних з локального сховища
+// Функція для збереження глобального об'єкта formData у локальне сховище
+function saveToLocalStorage() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+}
+
+// Функція для завантаження даних з локального сховища у глобальний об'єкт formData
 function loadFromLocalStorage() {
   const savedData = localStorage.getItem(STORAGE_KEY);
 
@@ -37,39 +37,39 @@ function loadFromLocalStorage() {
       // Оновлюємо глобальний об'єкт formData
       formData.email = parsedData.email || '';
       formData.message = parsedData.message || '';
-      // Оновлюємо DOM
-      updateDomFromFormData();
+      // Оновлюємо DOM з глобального об'єкта
+      updateDOMFromFormData();
     } catch (error) {
       console.error('Помилка парсингу даних:', error);
     }
   }
 }
 
-// Функція для скидання всього (глобальний об'єкт, localStorage, DOM)
-function resetForm() {
-  // Скидаємо глобальний об'єкт formData
+// Функція для скидання глобального об'єкта formData
+function resetFormData() {
   formData.email = '';
   formData.message = '';
-  // Очищаємо localStorage
-  localStorage.removeItem(STORAGE_KEY);
-  // Очищаємо DOM
-  form.reset();
 }
 
-// Обробник події input - оновлює глобальний об'єкт та зберігає в localStorage
+// Функція для повного скидання форми
+function resetForm() {
+  resetFormData(); // Скидаємо глобальний об'єкт
+  localStorage.removeItem(STORAGE_KEY); // Очищаємо localStorage
+  updateDOMFromFormData(); // Оновлюємо DOM з порожнього об'єкта
+}
+
+// ОБРОБНИК ПОДІЇ input - оновлює глобальний об'єкт та зберігає в localStorage
 form.addEventListener('input', () => {
-  // Оновлюємо глобальний об'єкт formData з поточними значеннями полів
-  updateFormData();
-  // Зберігаємо оновлений об'єкт у localStorage
-  saveToLocalStorage();
+  updateFormDataFromDOM(); // Оновлюємо глобальний об'єкт з DOM
+  saveToLocalStorage(); // Зберігаємо глобальний об'єкт у localStorage
 });
 
-// Обробник події submit
+// ОБРОБНИК ПОДІЇ submit
 form.addEventListener('submit', event => {
   event.preventDefault();
 
   // Оновлюємо глобальний об'єкт перед відправкою
-  updateFormData();
+  updateFormDataFromDOM();
 
   // Перевіряємо, чи всі поля заповнені
   if (formData.email === '' || formData.message === '') {
@@ -77,12 +77,12 @@ form.addEventListener('submit', event => {
     return;
   }
 
-  // Виводимо дані з глобального об'єкта formData в консоль
+  // ВИКОРИСТОВУЄМО ГЛОБАЛЬНИЙ ОБ'ЄКТ formData для виведення в консоль
   console.log('Відправлені дані:', formData);
 
-  // Скидаємо форму (очищаємо глобальний об'єкт, localStorage, DOM)
+  // Повне скидання форми (глобальний об'єкт, localStorage, DOM)
   resetForm();
 });
 
-// Завантажуємо збережені дані при завантаженні сторінки
+// ІНІЦІАЛІЗАЦІЯ - завантажуємо збережені дані при старті
 loadFromLocalStorage();
